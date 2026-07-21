@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\models\Company;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
@@ -23,8 +24,9 @@ trait BelongsToCompany
 
         // query hanya ke company dari user yang sedang login
         static::addGlobalScope('tenant_isolation', function (Builder $builder) {
-            if (Auth::check()) {
-                $builder->where($builder->getTable() . '.company_id', Auth::user()->company_id);
+            if (Auth::check() && Auth::user()->company_id) {
+                $table = $builder->getModel()->getTable();
+                $builder->where("{$table}.company_id", Auth::user()->company_id);
             }
         });
     }
