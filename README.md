@@ -35,7 +35,7 @@ Strategi multi-tenancy yang dipilih adalah **Row-Level Scoping / Single-Database
 
 ---
 
-## 🚀 Cara Menjalankan Aplikasi
+## Cara Running Aplikasi
 
 ### 1. Prasyarat System
 - PHP >= 8.2
@@ -56,3 +56,38 @@ cp .env.example .env
 
 # Generate Application Key
 php artisan key:generate
+```
+
+## Konfigurasi Database & Queue
+```env
+APP_NAME=Laravel
+APP_ENV=local
+APP_KEY= # Dihasilkan dari command `php artisan key:generate`
+APP_URL=http://localhost
+
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=saas_db
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+
+QUEUE_CONNECTION=database
+MAIL_MAILER=log
+```
+
+## Migration & Seeding
+```bash
+php artisan migrate --seed
+```
+
+## Running Server & Queue Worker
+```bash
+php artisan serve
+php artisan queue:work
+```
+
+## Menjalankan Automated Tests
+```bash
+php artisan test
+```
