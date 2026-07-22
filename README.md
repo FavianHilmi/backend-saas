@@ -13,7 +13,7 @@ Backend RESTful API untuk mini Project Management berbasis SaaS Multi-Tenant (ve
 
 ### Alasan Pemilihan Stack
 
-Laravel dipilih karena menyediakan ekosistem yang matang dan lengkap untuk kebutuhan SaaS:
+Memutuskan untuk menggunakan Laravel karena lebih familiar dan Laravel sudah menyediakan ekosistem yang matang dan lengkap untuk kebutuhan SaaS:
 1. **Security & Eloquent ORM:** Memudahkan implementasi *Global Scopes* untuk isolasi tenant yang aman dan konsisten.
 2. **Built-in Queue System:** Pengelolaan background job (seperti pengiriman notifikasi task) tanpa memerlukan library pihak ketiga.
 3. **Robust Testing Tools:** Dukungan bawaan PHPUnit/Pest yang memudahkan pembuatan tes *Feature/Integration* untuk menguji isolasi tenant dan RBAC.
@@ -168,7 +168,7 @@ Prefix URL: `/api/v1`
 ## Keputusan Teknis & Rencana Pengembangan
 
 ### Hal yang Disesuaikan Karena Keterbatasan Waktu:
-- Pengiriman notifikasi penugasan task (*task assignment*) tidak dihubungkan ke SMTP eksternal, melainkan di-queue secara *asynchronous* dan dicatat ke dalam log (`storage/logs/laravel.log`) menggunakan *Database Queue Driver*.
+- Pengiriman notifikasi penugasan task (*task assignment*) tidak dihubungkan ke SMTP eksternal, hanya di-queue secara *asynchronous* dan dicatat ke dalam log (`storage/logs/laravel.log`) menggunakan *Database Queue Driver*.
 - Endpoint `GET` saat ini masih membaca langsung dari database tanpa lapisan Redis Cache.
 
 ### Rencana Jika Ada Waktu Lebih:
