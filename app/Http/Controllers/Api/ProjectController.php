@@ -15,13 +15,16 @@ class ProjectController extends Controller
     {
         // otomatis memfilter WHERE company_id = ... dari function Trait BelongsToCompany
         $projects = Project::withCount('tasks')->latest()->get();
-        return $this->successResponse($projects, 'Projects retrieved successfully');
+        return $this->successResponse($projects, 'Projects Berhasil Diambil');
     }
 
     public function store(Request $request)
     {
+        if ($request->user()->role !== 'admin') {
+            return $this->errorResponse('Hanya admin yang bisa membuat project', 403);
+        }
         $validated = $request->validate([
-            'name'        => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'description' => 'nullable|string',
         ]);
 
@@ -33,25 +36,30 @@ class ProjectController extends Controller
 
     public function show(Project $project)
     {
-        // Route Model Binding + Global Scope supaya tidak bisa akses project dari company lain
+        $this->authorize('view', $project);
+
         return $this->successResponse($project->load('tasks'), 'Berhasil mengambil detail project');
-    }   
+    }
 
     public function update(Request $request, Project $project)
     {
+        $this->authorize('update', $project);
+
         $validated = $request->validate([
-            'name'        => 'sometimes|required|string|max:255',
+            'name' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
         ]);
 
         $project->update($validated);
 
-        return $this->successResponse($project, 'Project updated successfully');
+        return $this->successResponse($project, 'Project Berhasil Di-update');
     }
 
     public function destroy(Project $project)
     {
+        $this->authorize('delete', $project);
+
         $project->delete();
-        return $this->successResponse(null, 'Project deleted successfully');
+        return $this->successResponse(null, 'Project Berhasil Dihapus');
     }
 }

@@ -18,9 +18,9 @@ class AuthController extends Controller
     {
         $validated = $request->validate([
             'company_name' => 'required|string|max:255',
-            'name'         => 'required|string|max:255',
-            'email'        => 'required|string|email|max:255|unique:users',
-            'password'     => 'required|string|min:8',
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8',
         ]);
 
         $user = DB::transaction(function () use ($validated) {
@@ -29,10 +29,10 @@ class AuthController extends Controller
             ]);
 
             return User::create([
-                'name'       => $validated['name'],
-                'email'      => $validated['email'],
-                'password'   => Hash::make($validated['password']),
-                'role'       => 'admin',
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role' => 'admin',
                 'company_id' => $company->id,
             ]);
         });
@@ -40,7 +40,7 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return $this->successResponse([
-            'user'  => $user->load('company'),
+            'user' => $user->load('company'),
             'token' => $token,
         ], 'Registration successful', 201);
     }
@@ -48,20 +48,20 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $validated = $request->validate([
-            'email'    => 'required|email',
+            'email' => 'required|email',
             'password' => 'required',
         ]);
 
         $user = User::where('email', $validated['email'])->first();
 
-        if (! $user || ! Hash::check($validated['password'], $user->password)) {
+        if (!$user || !Hash::check($validated['password'], $user->password)) {
             return $this->errorResponse('Invalid credentials', 401);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return $this->successResponse([
-            'user'  => $user->load('company'),
+            'user' => $user->load('company'),
             'token' => $token,
         ], 'Berhasil Login');
     }
@@ -71,5 +71,29 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return $this->successResponse(null, 'Berhasil Logout');
+    }
+
+    public function registerMember(Request $request)
+    {
+
+        if (auth()->user()->role !== 'admin') {
+            return $this->errorResponse('Hanya admin yang dapat menambahkan member', 403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8',
+        ]);
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => 'member',
+            'company_id' => auth()->user()->company_id,
+        ]);
+
+        return $this->successResponse($user, 'Member berhasil ditambahkan', 201);
     }
 }

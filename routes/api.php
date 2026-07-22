@@ -13,6 +13,7 @@ Route::prefix('v1')->group(function () {
 
     // protected routes
     Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/registerMember', [AuthController::class, 'registerMember']);
         Route::post('/logout', [AuthController::class, 'logout']);
 
         Route::apiResource('projects', ProjectController::class);
