@@ -45,7 +45,7 @@ class TenantIsolationTest extends TestCase
 
     public function test_user_can_only_see_their_own_company_projects()
     {
-        $this->withoutExceptionHandling();
+        // $this->withoutExceptionHandling();
         // create project di Company 1 & 2
         Project::create([
             'company_id' => $this->nexusCompany->id,
@@ -81,7 +81,40 @@ class TenantIsolationTest extends TestCase
 
         // User dari Company 1 mencoba akses Task milik Company 2
         $response = $this->actingAs($this->userNexus, 'sanctum')
-            ->getJson("/api/v1/tasks/{$taskB->id}");
+            ->getJson("/api/v1/projects/{$projectB->id}/tasks/{$taskB->id}");
+
+        $response->assertStatus(404);
+    }
+
+    public function test_user_cannot_update_or_delete_other_company_project()
+    {
+        $projectVertex = Project::create([
+            'company_id' => $this->vertexCompany->id,
+            'name' => 'Project Test Vertex',
+        ]);
+
+        $updateResponse = $this->actingAs($this->userNexus, 'sanctum')
+            ->putJson("/api/v1/projects/{$projectVertex->id}", [
+                'name' => 'Test Hack Update',
+            ]);
+        $updateResponse->assertStatus(404);
+
+        $deleteResponse = $this->actingAs($this->userNexus, 'sanctum')
+            ->deleteJson("/api/v1/projects/{$projectVertex->id}");
+        $deleteResponse->assertStatus(404);
+    }
+
+    public function test_user_cannot_create_task_in_other_company_project()
+    {
+        $projectId = Project::create([
+            'company_id' => $this->vertexCompany->id,
+            'name' => 'Project Test Vertex',
+        ]);
+
+        $response = $this->actingAs($this->userNexus, 'sanctum')
+            ->postJson("/api/v1/projects/{$projectId->id}/tasks", [
+                'title' => 'Test Task Ilegal',
+            ]);
 
         $response->assertStatus(404);
     }

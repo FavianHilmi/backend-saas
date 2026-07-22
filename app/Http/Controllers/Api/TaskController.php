@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Project;
 use App\Models\Task;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
@@ -14,20 +15,14 @@ class TaskController extends Controller
 {
     use ApiResponse;
 
-    public function index(Request $request)
+    public function index(Request $request, Project $project)
     {
-        $companyId = $request->user()->company_id;
+        $this->authorize('view', $project);
 
-        $query = Task::whereHas('project', function ($q) use ($companyId) {
-            $q->where('company_id', $companyId);
-        })->with(['project', 'assignee']);
+        $query = $project->tasks()->with(['project', 'assignee']);
 
         if ($request->has('status')) {
             $query->where('status', $request->status);
-        }
-
-        if ($request->has('project_id')) {
-            $query->where('project_id', $request->project_id);
         }
 
         $tasks = $query->latest()->get();
@@ -35,15 +30,13 @@ class TaskController extends Controller
         return $this->successResponse($tasks, 'Berhasil mengambil daftar task');
     }
 
-    public function store(Request $request)
+    public function store(Request $request, Project $project)
     {
+        $this->authorize('view', $project);
+
         $companyId = $request->user()->company_id;
 
         $validated = $request->validate([
-            'project_id' => [
-                'required',
-                Rule::exists('projects', 'id')->where(fn($q) => $q->where('company_id', $companyId))
-            ],
             'user_id' => [
                 'nullable',
                 Rule::exists('users', 'id')->where(fn($q) => $q->where('company_id', $companyId))
@@ -52,7 +45,7 @@ class TaskController extends Controller
             'status' => 'nullable|in:todo,in_progress,done',
         ]);
 
-        $task = Task::create($validated);
+        $task = $project->tasks()->create($validated);
 
         if ($task->user_id) {
             SendTaskAssignedNotification::dispatch($task);
@@ -60,14 +53,14 @@ class TaskController extends Controller
         return $this->successResponse($task->load(['project', 'assignee']), 'Berhasil membuat task', 201);
     }
 
-    public function show(Task $task)
+    public function show(Project $project, Task $task)
     {
         $this->authorize('view', $task);
 
         return $this->successResponse($task->load(['project', 'assignee']), 'Berhasil mengambil detail task');
     }
 
-    public function update(Request $request, Task $task)
+    public function update(Request $request, Project $project, Task $task)
     {
         $this->authorize('update', $task);
 
@@ -75,11 +68,6 @@ class TaskController extends Controller
         $companyId = $user->company_id;
 
         $validated = $request->validate([
-            'project_id' => [
-                'sometimes',
-                'required',
-                Rule::exists('projects', 'id')->where(fn($q) => $q->where('company_id', $companyId))
-            ],
             'user_id' => [
                 'nullable',
                 Rule::exists('users', 'id')->where(fn($q) => $q->where('company_id', $companyId))
@@ -102,7 +90,7 @@ class TaskController extends Controller
         return $this->successResponse($task->load(['project', 'assignee']), 'Berhasil memperbarui task');
     }
 
-    public function destroy(Task $task)
+    public function destroy(Project $project, Task $task)
     {
         $this->authorize('delete', $task);
 
