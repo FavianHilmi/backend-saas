@@ -170,6 +170,12 @@ Prefix URL: `/api/v1`
 ### Hal yang Disesuaikan Karena Keterbatasan Waktu:
 - Pengiriman notifikasi penugasan task (*task assignment*) tidak dihubungkan ke SMTP eksternal, hanya di-queue secara *asynchronous* dan dicatat ke dalam log (`storage/logs/laravel.log`) menggunakan *Database Queue Driver*.
 - Endpoint `GET` saat ini masih membaca langsung dari database tanpa lapisan Redis Cache.
+  
+### Keputusan Teknis yang Memicu Keraguan
+
+**Pemilihan *Row-Level Scoping* dibanding *Schema-per-Tenant***
+* Saat menentukan arsitektur multi-tenancy, saya sempat ragu antara memilih *Single Database* atau *Schema-per-Tenant*. Di satu sisi, *Row-Level Scoping* (Single Database) menggunakan Eloquent Global Scope dapat efisiensi waktu, hemat resource server, dan proses migrasi database jauh lebih mudah di tahap awal. Namun, jika jumlah data bertambah hingga jutaan baris dalam satu tabel, performanya bisa menurun dan risikonya bergantung pada developer agar tidak terjadi kebocoran data (*data leak*).
+* Dengan mempertimbangkan alokasi waktu pengerjaan dan scope proyek saat ini, saya memutuskan menggunakan *Row-Level Scoping* (Single Database). Untuk memitigasi risikonya, saya menambahkan **Database Indexing** pada kolom `company_id` untuk menjaga performa query, dan juga membuat **Automated Tenant Isolation Test** untuk memastikan data antar-tenant tidak akan pernah bocor.
 
 ### Rencana Jika Ada Waktu Lebih:
 - Penerapa Redis Caching untuk endpoint list data, dan mekanisme *cache invalidation* otomatis saat ada perubahan data (*create/update/delete*).
